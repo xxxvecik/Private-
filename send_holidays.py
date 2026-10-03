@@ -11,6 +11,7 @@ import httpx
 TOKEN = os.environ["BOT_TOKEN"]
 CHAT_ID = os.environ["CHAT_ID"]
 TZ = ZoneInfo("Europe/Berlin")
+FLAG_DIR = "sent_flag"
 
 MONTHS = ["січня", "лютого", "березня", "квітня", "травня", "червня",
           "липня", "серпня", "вересня", "жовтня", "листопада", "грудня"]
@@ -65,9 +66,15 @@ def fetch_holidays(day: int, month: int) -> str:
 
 def main():
     now = dt.datetime.now(TZ)
-    if os.environ.get("FORCE") != "1" and now.hour != 9:
-        print(f"Зараз {now:%H:%M} за Берліном, пропускаю.")
-        sys.exit(0)
+    flag = f"{FLAG_DIR}/{now:%Y-%m-%d}"
+
+    if os.environ.get("FORCE") != "1":
+        if now.hour < 9:
+            print(f"Зараз {now:%H:%M} за Берліном, ще рано.")
+            sys.exit(0)
+        if os.path.exists(flag):
+            print("Сьогодні вже надіслано, пропускаю.")
+            sys.exit(0)
 
     text = fetch_holidays(now.day, now.month)
     r = httpx.post(
@@ -78,6 +85,9 @@ def main():
     if r.status_code != 200:
         print("Telegram відповів:", r.status_code, r.text)
     r.raise_for_status()
+
+    os.makedirs(FLAG_DIR, exist_ok=True)
+    open(flag, "w").close()
     print("Надіслано.")
 
 
