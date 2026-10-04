@@ -28,3 +28,4 @@ jobs:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
           FORCE: ${{ github.event_name == 'workflow_dispatch' && '1' || '0' }}
+
